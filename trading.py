@@ -257,7 +257,7 @@ def buy_volume(volume_list, prices, targets, volume_holdings, budget_per_coin, b
             # 현재가가 고가보다 높은 경우
             # 고가가 목표가 대비 2% 이상 오르지 않은 경우
             #if volume_holdings[tick] is False and blackList[tick] is False and ticker[1] > 0 and price >= high and price < target * 1.02: 
-            if volume_holdings[tick] is False: 
+            if volume_holdings[tick] is False and high < target * 1.02: 
                 logger.info('Ticker')
                 logger.info(ticker)
                 fee = budget_per_coin * 0.0005
@@ -618,37 +618,13 @@ portfolio_time1, portfolio_time2, portfolio_time3, portfolio_time4 = make_portfo
 volume_time = make_volume_times(now)                                     # 오후 거래량 시간 설정
 
 tickers = pyupbit.get_tickers(fiat="KRW")                                # 티커 리스트 얻기
-target_tickers = ['KRW-XRP', 'KRW-GMT']
-
-logger.info('-------------------------')
-logger.info('sell_time1')
-logger.info(sell_time1)
-logger.info('sell_time2')
-logger.info(sell_time2)
-logger.info('setup_time1')
-logger.info(setup_time1)
-logger.info('setup_time2')
-logger.info(setup_time2)
-logger.info('volume_time')
-logger.info(volume_time)
-logger.info('portfolio_time1')
-logger.info(portfolio_time1)
-logger.info('portfolio_time2')
-logger.info(portfolio_time2)
-logger.info('portfolio_time3')
-logger.info(portfolio_time3)
-logger.info('portfolio_time4')
-logger.info(portfolio_time4)
-logger.info('-------------------------')
-
-
+logger.info('Tickers')
+logger.info(tickers)
 closes, targets = set_targets(tickers)                                   # 코인별 목표가 계산
 
 volume_holdings = {ticker:False for ticker in tickers}                   # 전일 대비 거래량 기준 보유 상태 초기화
 high_prices = inquiry_high_prices(tickers)                               # 코인별 당일 고가 저장
 blackList = {ticker:False for ticker in tickers}                         # 한 번 익절한 코인
-
-spans_a, spans_b = get_spans(tickers)                                    # 일목균형표 선행스팬 1, 2 설정 
 
 volume_list = {}
 
@@ -657,34 +633,23 @@ while True:
     now = datetime.datetime.now()
     schedule.run_pending()                                               # 20분 마다 블랙리스트를 초기화
 
+    # 코인 포트폴리오 정보를 지속적으로 갱신
+    with open('target_list.json') as target_f :
+        target_file = json.load(target_f)
+        target_tickers = target_file['target_list']
+
+    logger.info('target_tickers')
+    logger.info(target_tickers)
+
     # 새로운 거래일에 대한 데이터 셋업 (09:01:00 ~ 09:01:20)
     # 금일, 익일 포함
     if (sell_time1 < now < sell_time2) or (setup_time1 < now < setup_time2):
         logger.info('새로운 거래일 데이터 셋업')
         try_sell(tickers)                                                # 매도 되지 않은 코인에 대해서 한 번 더 매도 시도
 
-        spans_a, spans_b = get_spans(tickers)                            # 일목균형표 선행스팬 1, 2 설정
-
         setup_time1, setup_time2 = make_setup_times(now)                 # 다음 거래일 셋업 시간 갱신
         volume_time = make_volume_times(now)                             # 오후 거래량 시간 설정
         portfolio_time1, portfolio_time2, portfolio_time3, portfolio_time4 = make_portfolio_today_times(now)
-
-        logger.info('-------------------------')
-        logger.info('setup_time1')
-        logger.info(setup_time1)
-        logger.info('setup_time2')
-        logger.info(setup_time2)
-        logger.info('volume_time')
-        logger.info(volume_time)
-        logger.info('portfolio_time1')
-        logger.info(portfolio_time1)
-        logger.info('portfolio_time2')
-        logger.info(portfolio_time2)
-        logger.info('portfolio_time3')
-        logger.info(portfolio_time3)
-        logger.info('portfolio_time4')
-        logger.info(portfolio_time4)
-        logger.info('-------------------------')
 
         closes, targets = set_targets(tickers)                           # 목표가 갱신
 
@@ -720,26 +685,11 @@ while True:
 
     budget_per_coin = set_budget()                                        # 코인별 최대 배팅 금액 계산
 
-    logger.info('blackList')
-    for black in blackList:
-        if blackList[black]:
-            logger.info(black)
-
     logger.info('budget_per_coin')
     logger.info(budget_per_coin)
-
-    # 매도(손절매)
-    # sell_holdings(tickers, volume_portfolio, prices, targets, blackList) 
 
     # 매수
     volume_holdings = set_holdings(tickers)
     buy_volume(volume_list, prices, targets, volume_holdings, budget_per_coin, blackList, high_prices)
-
-    # 매도(익절)
-    '''
-    if volume_time < now < setup_time1:
-        volume_holdings = set_holdings(tickers)
-        try_trailling_stop(volume_list, prices, closes, targets, high_prices, blackList)
-    '''
 
     time.sleep(INTERVAL)
