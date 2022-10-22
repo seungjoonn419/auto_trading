@@ -638,8 +638,7 @@ while True:
         target_file = json.load(target_f)
         target_tickers = target_file['target_list']
 
-    logger.info('target_tickers')
-    logger.info(target_tickers)
+    logger.info('target_tickers: %s', target_tickers)
 
     # 새로운 거래일에 대한 데이터 셋업 (09:01:00 ~ 09:01:20)
     # 금일, 익일 포함
@@ -653,8 +652,7 @@ while True:
 
         closes, targets = set_targets(tickers)                           # 목표가 갱신
 
-        logger.info('Targets')
-        logger.info(targets)
+        logger.info('Targets: %s', targets)
 
         volume_holdings = {ticker:False for ticker in tickers}           # 전일 대비 거래량 기준 보유 상태 초기화
         high_prices = {ticker: 0 for ticker in tickers}                  # 코인별 당일 고가 초기화
@@ -676,8 +674,7 @@ while True:
     sorted_volumes = sorted(volumes.items(), key = lambda item: item[1], reverse = True)
     volume_list = sorted_volumes[0:COIN_NUMS]
 
-    logger.info('volume_list')
-    logger.info(volume_list)
+    logger.info('volume_list: %s', volume_list)
 
     volume_portfolio = [x[0] for x in volume_list]
 
@@ -685,8 +682,10 @@ while True:
 
     budget_per_coin = set_budget()                                        # 코인별 최대 배팅 금액 계산
 
-    logger.info('budget_per_coin')
-    logger.info(budget_per_coin)
+    logger.info('budget_per_coin: %s', budget_per_coin)
+
+    # 매도
+    sell_holdings(tickers, volume_portfolio, prices, targets, blackList)
 
     # 매수
     volume_holdings = set_holdings(tickers)
