@@ -684,9 +684,6 @@ while True:
 
     logger.info('budget_per_coin: %s', budget_per_coin)
 
-    # 매도
-    sell_holdings(tickers, volume_portfolio, prices, targets, blackList)
-
     # 매수
     volume_holdings = set_holdings(tickers)
     buy_volume(volume_list, prices, targets, volume_holdings, budget_per_coin, blackList, high_prices)
