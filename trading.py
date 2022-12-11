@@ -644,7 +644,12 @@ while True:
     # 금일, 익일 포함
     if (sell_time1 < now < sell_time2) or (setup_time1 < now < setup_time2):
         logger.info('새로운 거래일 데이터 셋업')
-        try_sell(tickers)                                                # 매도 되지 않은 코인에 대해서 한 번 더 매도 시도
+
+        # 시가에 매도
+        # 10번 반복
+        for i in range(1,11):
+            try_sell(tickers)     
+            time.sleep(1)
 
         setup_time1, setup_time2 = make_setup_times(now)                 # 다음 거래일 셋업 시간 갱신
         volume_time = make_volume_times(now)                             # 오후 거래량 시간 설정
@@ -662,7 +667,7 @@ while True:
         volume_list = {}                                                 # 전일 대비 거래량 순위
 
         logger.info('새로운 거래일 데이터 셋업 마무리')
-        time.sleep(20)
+        time.sleep(10)
 
     prices = get_cur_prices(tickers)                                     # 현재가 계산
     update_high_prices(tickers, high_prices, prices)                     # 고가 갱신
@@ -685,7 +690,9 @@ while True:
     logger.info('budget_per_coin: %s', budget_per_coin)
 
     # 매수
-    volume_holdings = set_holdings(tickers)
-    buy_volume(volume_list, prices, targets, volume_holdings, budget_per_coin, blackList, high_prices)
+    for i in range(1,11): 
+        volume_holdings = set_holdings(tickers)
+        buy_volume(volume_list, prices, targets, volume_holdings, budget_per_coin, blackList, high_prices)
+        time.sleep(1)
 
     time.sleep(INTERVAL)
